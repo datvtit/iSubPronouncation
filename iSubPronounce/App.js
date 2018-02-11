@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   PixelRatio,
   ToastAndroid,
+  NetInfo,
 } from 'react-native';
 
 import HTMLParser from 'fast-html-parser';
@@ -86,7 +87,7 @@ export default class App extends Component {
         try {
           if (typeof text !== 'undefined' && text !== 'undefined' && text !== '') {
             console.log("DATVIT >> parseVideoFromUrl_TEXT: " + text);
-            
+
             if (text === '') {
               this.setState({
                 isLoading: false,
@@ -227,17 +228,17 @@ export default class App extends Component {
           </View>
 
           <View style={styles.formControl}>
-            <ButtonSearch onPress={() => this.previousVideo()} style={{ marginRight: 30 }}>
-              <Image source={this.setPreviousImage()} style={{ width: 140, height: 140 }} />
+            <ButtonSearch onPress={() => this.previousVideo()} style={{ marginRight: (Platform.OS === 'ios') ? 40 : 30 }}>
+              <Image source={this.setPreviousImage()} style={{ width: (Platform.OS === 'ios') ? 60 : 140, height: (Platform.OS === 'ios') ? 60 : 140 }} />
             </ButtonSearch>
-            <ButtonSearch onPress={() => this.replayVideo()} style={{ marginRight: 30 }}>
-              <Image source={require('./images/replay.png')} style={{ width: 120, height: 120 }} />
+            <ButtonSearch onPress={() => this.replayVideo()} style={{ marginRight: (Platform.OS === 'ios') ? 40 : 30 }}>
+              <Image source={require('./images/replay.png')} style={{ width: (Platform.OS === 'ios') ? 40 : 120, height: (Platform.OS === 'ios') ? 40 : 120 }} />
             </ButtonSearch>
-            <ButtonSearch onPress={() => this.togglePlay()} style={{ marginRight: 30 }}>
-              <Image source={this.setPlayPauseImage()} style={{ width: 120, height: 120 }} />
+            <ButtonSearch onPress={() => this.togglePlay()} style={{ marginRight: (Platform.OS === 'ios') ? 40 : 30 }}>
+              <Image source={this.setPlayPauseImage()} style={{ width: (Platform.OS === 'ios') ? 40 : 120, height: (Platform.OS === 'ios') ? 40 : 120 }} />
             </ButtonSearch>
             <ButtonSearch onPress={() => this.nextVideo()} >
-              <Image source={this.setSkipImage()} style={{ width: 140, height: 140 }} />
+              <Image source={this.setSkipImage()} style={{ width: (Platform.OS === 'ios') ? 60 : 140, height: (Platform.OS === 'ios') ? 60 : 140 }} />
             </ButtonSearch>
           </View>
 
@@ -814,7 +815,20 @@ export default class App extends Component {
                         fullscreen: false,
                       });
                     }), () => {
-                      this.fetchDataFromUrl();
+                      if (Platform.OS === 'ios') {
+                        NetInfo.isConnected.addEventListener('change', this.handleFirstConnectivityChange);
+                      } else {
+                        NetInfo.isConnected.fetch().then(isConnected => {
+                          if (isConnected) {
+                            this.fetchDataFromUrl();
+                          } else {
+                            ToastAndroid.show('Not connection internet', ToastAndroid.SHORT);
+                            this.setState({
+                              isLoading: false,
+                            });
+                          }
+                        });
+                      }
                     });
                   }}
                 />
@@ -845,10 +859,27 @@ export default class App extends Component {
                       fullscreen: false,
                     });
                   }), () => {
-                    this.fetchDataFromUrl();
+                    if (Platform.OS === 'ios') {
+                      NetInfo.isConnected.addEventListener('change', this.handleFirstConnectivityChange);
+                    } else {
+                      NetInfo.isConnected.fetch().then(isConnected => {
+                        if (isConnected) {
+                          this.fetchDataFromUrl();
+                        } else {
+                          ToastAndroid.show('Not connection internet', ToastAndroid.SHORT);
+                          this.setState({
+                            isLoading: false,
+                          });
+                        }
+                      });
+                    }
                   });
                 }}>
-                  <Image source={require('./images/searchIcon.png')} style={{ width: 60, height: 60 }} />
+                  <Image source={require('./images/searchIcon.png')} style={{
+                    width: (Platform.OS === 'ios') ? 20 : 60,
+                    height: (Platform.OS === 'ios') ? 20 : 60,
+                    marginTop: (Platform.OS === 'ios') ? 3 : 0,
+                  }} />
                 </ButtonSearch>
               </View>
             </View>
@@ -884,12 +915,24 @@ export default class App extends Component {
       </ScrollView>
     );
   }
+
+  handleFirstConnectivityChange(isConnected) {
+    if (!isConnected) {
+      this.setState({
+        isLoading: false,
+      });
+    } else {
+     this.fetchDataFromUrl();
+      NetInfo.isConnected.removeEventListener('change', handleFirstConnectivityChange);
+    }
+  }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+    marginTop: (Platform.OS === 'ios') ? 20 : 0,
   },
 
   containerHeader: {
@@ -923,7 +966,7 @@ const styles = StyleSheet.create({
     padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#888',
     borderRadius: 5,
     backgroundColor: '#fff',
