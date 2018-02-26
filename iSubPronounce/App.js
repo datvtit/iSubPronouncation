@@ -33,6 +33,7 @@ export default class App extends Component {
     this.state = {
       isLoading: false,
       isFinish: false,
+      isWifi: false,
 
       textSearch: '',
       searchText: '',
@@ -63,8 +64,8 @@ export default class App extends Component {
   /**
    *  Get Data From URL
    */
-  fetchDataFromUrl() {
-
+  fetchDataFromUrl = () => {
+    console.log("fetchDataFromUrl");
     if (this.state.searchText !== '' && typeof this.state.searchText === "string" &&
       this.state.searchType !== '' && typeof this.state.searchType === "string") {
       this.parseVideoFromUrl();
@@ -76,7 +77,8 @@ export default class App extends Component {
     }
   }
 
-  parseVideoFromUrl() {
+  parseVideoFromUrl = () => {
+    console.log("parseVideoFromUrl");
     fetch(ConstantHelper.PRONOUNCE_API_V2 + this.state.searchText)
       .then((response) => {
         if (response.status === 200) {
@@ -86,13 +88,15 @@ export default class App extends Component {
       }).then((text) => {
         try {
           if (typeof text !== 'undefined' && text !== 'undefined' && text !== '') {
-            console.log("DATVIT >> parseVideoFromUrl_TEXT: " + text);
+            // console.log("DATVIT >> parseVideoFromUrl_TEXT: " + text);
 
             if (text === '') {
               this.setState({
                 isLoading: false,
               });
-              ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+              if (Platform.OS === 'android') {
+                ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+              }
             } else {
               let option = {
                 lowerCaseTagName: true,
@@ -109,7 +113,7 @@ export default class App extends Component {
 
                 let data = this.encryptFun(res, ConstantHelper.KEY_CRYPT);
                 let listVideo = JSON.parse(data);
-                // console.log("DATVIT >> videoList_LENGTH: " + listVideo.length);
+                console.log("DATVIT >> videoList_LENGTH: " + listVideo.length);
 
                 if (listVideo.length > 0) {
                   let arrVideo = [];
@@ -167,7 +171,8 @@ export default class App extends Component {
       });
   }
 
-  showData() {
+  showData = () => {
+    console.log("showData");
     if (this.state.videoIdList.length > 0) {
       return (
         <View style={styles.containerContent}>
@@ -263,7 +268,8 @@ export default class App extends Component {
     }
   }
 
-  updateTime() {
+  updateTime = () => {
+    console.log("updateTime");
     if (Platform.OS === 'android') {
       const timeUpdate = setInterval(() => {
         try {
@@ -394,7 +400,7 @@ export default class App extends Component {
   checkSub(id) {
     console.log("DATVIT >> checkSub: " + this.state.videosIndex);
     let link = ConstantHelper.CHECK_SUB_YOUTUBE_API + id;
-    // console.log('CHECK_SUB_YOUTUBE_API >> LINK', link);
+    console.log('CHECK_SUB_YOUTUBE_API >> LINK', link);
     let parseString = XMLParser.parseString;
 
     fetch(link)
@@ -407,7 +413,7 @@ export default class App extends Component {
             let lang = track.$.lang_code;
             let name = track.$.name;
             if (lang.search('en') > -1 && lang_default == 'true') {
-              this.getSub(id, name, lang);
+              this.getSub.bind(this, id, name, lang);
             }
           });
         });
@@ -481,7 +487,7 @@ export default class App extends Component {
             }
           });
 
-          this.setSubtitle(caption, capList, timeSeek, mark);
+          this.setSubtitle.bind(this, caption, capList, timeSeek, mark);
         });
       }).catch((err) => {
         // console.log('GET_SUB_YOUTUBE_API >> ERROR', err);
@@ -501,7 +507,7 @@ export default class App extends Component {
     });
   }
 
-  updateSubtitle() {
+  updateSubtitle = () => {
     const capUpdate = setInterval(() => {
       try {
 
@@ -560,7 +566,7 @@ export default class App extends Component {
     }, 1000);
   }
 
-  formatSubtitle() {
+  formatSubtitle = () => {
     // console.log("DATVIT >>  formatSubtitle");
     let capNew = [];
 
@@ -638,7 +644,7 @@ export default class App extends Component {
     return capNew;
   }
 
-  setPreviousImage() {
+  setPreviousImage = () => {
     if (this.state.videosIndex > 0) {
       return (
         require('./images/previous.png')
@@ -649,7 +655,7 @@ export default class App extends Component {
     );
   }
 
-  setSkipImage() {
+  setSkipImage = () => {
     if (this.state.videosIndex < this.state.videoIdList.length - 1) {
       return (
         require('./images/skip.png')
@@ -660,7 +666,7 @@ export default class App extends Component {
     );
   }
 
-  setPlayPauseImage() {
+  setPlayPauseImage = () => {
     if (this.state.status === 'playing') {
       return (
         require('./images/pause.png')
@@ -671,7 +677,7 @@ export default class App extends Component {
     );
   }
 
-  replayVideo() {
+  replayVideo = () => {
     this.setState({
       isLoading: true,
       isSeek: false,
@@ -683,12 +689,14 @@ export default class App extends Component {
       duration: 0,
       currentTime: 0
     }, () => {
-      ToastAndroid.show('Replay video', ToastAndroid.SHORT);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Replay video', ToastAndroid.SHORT);
+      }
       this.checkSub(this.state.videoIdList[this.state.videosIndex]);
     })
   }
 
-  togglePlay() {
+  togglePlay = () => {
     if (this.state.status === 'playing') {
       this.setState({
         isPlaying: false,
@@ -704,7 +712,7 @@ export default class App extends Component {
     }
   }
 
-  nextVideo() {
+  nextVideo = () => {
     if (this.state.videosIndex < this.state.videoIdList.length - 1) {
       this.setState({
         isLoading: true,
@@ -720,11 +728,13 @@ export default class App extends Component {
         this.checkSub(this.state.videoIdList[this.state.videosIndex]);
       })
     } else {
-      ToastAndroid.show('This is the last video', ToastAndroid.SHORT);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('This is the last video', ToastAndroid.SHORT);
+      }
     }
   }
 
-  previousVideo() {
+  previousVideo = () => {
     if (this.state.videosIndex > 0) {
       this.setState({
         isLoading: true,
@@ -740,11 +750,13 @@ export default class App extends Component {
         this.checkSub(this.state.videoIdList[this.state.videosIndex]);
       })
     } else {
-      ToastAndroid.show('This is the first video', ToastAndroid.SHORT);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('This is the first video', ToastAndroid.SHORT);
+      }
     }
   }
 
-  encryptFun(data, key) {
+  encryptFun = (data, key) => {
     // let keyParse = CryptoJS.enc.Latin1.parse(key);
     // let iv = CryptoJS.enc.Latin1.parse(key);
     // let encrypted = CryptoJS.AES.encrypt(
@@ -815,19 +827,15 @@ export default class App extends Component {
                         fullscreen: false,
                       });
                     }), () => {
-                      if (Platform.OS === 'ios') {
-                        NetInfo.isConnected.addEventListener('change', this.handleFirstConnectivityChange);
-                      } else {
-                        NetInfo.isConnected.fetch().then(isConnected => {
-                          if (isConnected) {
-                            this.fetchDataFromUrl();
-                          } else {
-                            ToastAndroid.show('Not connection internet', ToastAndroid.SHORT);
-                            this.setState({
-                              isLoading: false,
-                            });
-                          }
+                      if (this.state.isWifi === false) {
+                        this.setState({
+                          isLoading: false,
                         });
+                      } else {
+                        if (Platform.OS === 'android') {
+                          ToastAndroid.show('Not connection internet. Please check connection', ToastAndroid.SHORT);
+                        }
+                        this.fetchDataFromUrl();
                       }
                     });
                   }}
@@ -859,20 +867,17 @@ export default class App extends Component {
                       fullscreen: false,
                     });
                   }), () => {
-                    if (Platform.OS === 'ios') {
-                      NetInfo.isConnected.addEventListener('change', this.handleFirstConnectivityChange);
-                    } else {
-                      NetInfo.isConnected.fetch().then(isConnected => {
-                        if (isConnected) {
-                          this.fetchDataFromUrl();
-                        } else {
-                          ToastAndroid.show('Not connection internet', ToastAndroid.SHORT);
-                          this.setState({
-                            isLoading: false,
-                          });
-                        }
+                    if (this.state.isWifi === false) {
+                      this.setState({
+                        isLoading: false,
                       });
+                    } else {
+                      if (Platform.OS === 'android') {
+                        ToastAndroid.show('Not connection internet. Please check connection', ToastAndroid.SHORT);
+                      }
+                      this.fetchDataFromUrl();
                     }
+
                   });
                 }}>
                   <Image source={require('./images/searchIcon.png')} style={{
@@ -916,15 +921,22 @@ export default class App extends Component {
     );
   }
 
-  handleFirstConnectivityChange(isConnected) {
-    if (!isConnected) {
-      this.setState({
-        isLoading: false,
-      });
-    } else {
-     this.fetchDataFromUrl();
-      NetInfo.isConnected.removeEventListener('change', handleFirstConnectivityChange);
-    }
+  componentDidMount() {
+    NetInfo.isConnected.addEventListener('change', this.handleConnectionChange);
+
+    NetInfo.isConnected.fetch().done(
+      (isConnected) => { this.setState({ isWifi: isConnected }); }
+    );
+  }
+
+  componentWillUnmount() {
+    NetInfo.isConnected.removeEventListenesr('change', this.handleConnectionChange);
+  }
+
+  handleConnectionChange = (isConnected) => {
+    this.setState({
+      isWifi: isConnected
+    });
   }
 }
 
