@@ -1,5 +1,6 @@
 
 export default class ConstantHelper {
+    static PRONOUNCE_API = 'https://youglish.com/search/';
     static PRONOUNCE_API_V2 = 'https://www.saylish.com/search/';
     static KEY_CRYPT = 'saylishkeyone';
 

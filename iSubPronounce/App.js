@@ -64,6 +64,7 @@ export default class App extends Component {
   /**
    *  Get Data From URL
    */
+
   fetchDataFromUrl = () => {
     console.log("fetchDataFromUrl");
     if (this.state.searchText !== '' && typeof this.state.searchText === "string" &&
@@ -80,96 +81,170 @@ export default class App extends Component {
   }
 
   parseVideoFromUrl = () => {
-    console.log("parseVideoFromUrl");
-    fetch(ConstantHelper.PRONOUNCE_API_V2 + this.state.searchText)
+    var url = ConstantHelper.PRONOUNCE_API + this.state.searchText;
+    console.log("parseVideoFromUrl: " + url);
+
+    fetch(url)
       .then((response) => {
+        console.log("DATVIT >> response: " + response.status);
         if (response.status === 200) {
           return response.text();
         }
         return '';
-      }).then((text) => {
-        try {
-          if (typeof text !== 'undefined' && text !== 'undefined' && text !== '') {
-            // console.log("DATVIT >> parseVideoFromUrl_TEXT: " + text);
+      })
+      .then((responseData) => {
+        this.processDataNew(responseData);
+      })
+      .catch((error) => {
+        console.error('GET DATA ERROR: ' + error);
+        this.setState({
+          isLoading: false,
+        });
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+        }
+      });
+  }
 
-            if (text === '') {
+  processData = (text) => {
+    try {
+      if (typeof text !== 'undefined' && text !== 'undefined' && text !== '') {
+        // console.log("DATVIT >> parseVideoFromUrl_TEXT: " + text);
+
+        if (text === '') {
+          this.setState({
+            isLoading: false,
+          });
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+          }
+        } else {
+          let option = {
+            lowerCaseTagName: true,
+            script: true,
+            style: false,
+            pre: false
+          };
+          let root = HTMLParser.parse(text, option);
+          let script = root.querySelector('#kq');
+
+          if (script && script.text) {
+            let res = script.text;
+
+            let data = this.encryptFun(res, ConstantHelper.KEY_CRYPT);
+            let listVideo = JSON.parse(data);
+            console.log("DATVIT >> listVideo: " + listVideo.length);
+
+            if (listVideo.length > 0) {
+              let arrVideo = [];
+              let idVideo = [];
+
+              let size = Math.min(20, listVideo.length);
+
+              for (let i = 0; i < size; i++) {
+                let video = listVideo[i].toString();
+                idVideo.push(video);
+              }
+
+              if (Array.isArray(idVideo) && idVideo.length > 0) {
+                this.setState({
+                  isLoading: false,
+                  isSeek: false,
+
+                  videoIdList: idVideo,
+                  videosIndex: 0,
+                }, () => {
+                  this.checkSub(this.state.videoIdList[this.state.videosIndex]);
+                });
+              } else {
+                this.setState({
+                  isLoading: false,
+                });
+                if (Platform.OS === 'android') {
+                  ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+                }
+              }
+            } else {
               this.setState({
                 isLoading: false,
               });
               if (Platform.OS === 'android') {
                 ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
               }
-            } else {
-              let option = {
-                lowerCaseTagName: true,
-                script: true,
-                style: false,
-                pre: false
-              };
-              let root = HTMLParser.parse(text, option);
-              let script = root.querySelector('#kq');
-              if (script !== 'undefined') {
-                let res = script.text;
-
-                let data = this.encryptFun(res, ConstantHelper.KEY_CRYPT);
-                let listVideo = JSON.parse(data);
-                console.log("DATVIT >> listVideo: " + listVideo);
-
-                if (listVideo.length > 0) {
-                  let arrVideo = [];
-                  let idVideo = [];
-
-                  let size = Math.min(20, listVideo.length);
-
-                  for (let i = 0; i < size; i++) {
-                    let video = listVideo[i].toString();
-                    idVideo.push(video);
-                  }
-
-                  if (Array.isArray(idVideo) && idVideo.length > 0) {
-                    this.setState({
-                      isLoading: false,
-                      isSeek: false,
-
-                      videoIdList: idVideo,
-                      videosIndex: 0,
-                    }, () => {
-                      this.checkSub(this.state.videoIdList[this.state.videosIndex]);
-                    });
-                  } else {
-                    this.setState({
-                      isLoading: false,
-                    });
-                  }
-                } else {
-                  this.setState({
-                    isLoading: false,
-                  });
-                }
-              } else {
-                this.setState({
-                  isLoading: false,
-                });
-              }
             }
           } else {
             this.setState({
               isLoading: false,
             });
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+            }
           }
-        } catch (error) {
-          console.error('ERROR: ' + error);
-          this.setState({
-            isLoading: false,
-          });
         }
-      }).catch((error) => {
-        console.error('GET DATA ERROR: ' + error);
+      } else {
         this.setState({
           isLoading: false,
         });
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+        }
+      }
+    } catch (error) {
+      console.error('ERROR: ' + error);
+      this.setState({
+        isLoading: false,
       });
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+      }
+    }
   }
+
+  processDataNew = (text) => {
+    try {
+      if (typeof text !== 'undefined' && text !== 'undefined' && text !== '') {
+
+        if (text === '') {
+          this.setState({
+            isLoading: false,
+          });
+          if (Platform.OS === 'android') {
+            ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+          }
+        } else {
+          if (text.search('params.jsonData')) {
+            var res = text.substring(text.indexOf('total_results') - 3, text.indexOf('params.jsStart')).trim();
+            res = res.replace(/\\/g, '');
+            res = res.substring(0, res.length - 2);
+            console.log("DATVIT >> listVideo: " + res);
+          } else {
+            this.setState({
+              isLoading: false,
+            });
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+            }
+          }
+        }
+      } else {
+        this.setState({
+          isLoading: false,
+        });
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+        }
+      }
+    } catch (error) {
+      console.error('ERROR: ' + error);
+      this.setState({
+        isLoading: false,
+      });
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Sorry :(  There is no result for ' + this.state.searchText, ToastAndroid.SHORT);
+      }
+    }
+  }
+
 
   showData = () => {
     if (this.state.videoIdList.length > 0) {
@@ -515,6 +590,7 @@ export default class App extends Component {
         if (!this.state.isSeek) {
           this.setState({
             isSeek: true,
+            isPlaying: true,
           }, () => {
             if (this.state.timeSeek) {
               console.log("SEEK_TO: " + Number.parseInt(this.state.timeSeek));
@@ -712,7 +788,7 @@ export default class App extends Component {
       }, () => {
         if (Platform.OS === 'android') {
           ToastAndroid.show('Video continue', ToastAndroid.SHORT);
-        } 
+        }
       })
     }
   }
@@ -762,19 +838,7 @@ export default class App extends Component {
   }
 
   encryptFun = (data, key) => {
-    // let keyParse = CryptoJS.enc.Latin1.parse(key);
-    // let iv = CryptoJS.enc.Latin1.parse(key);
-    // let encrypted = CryptoJS.AES.encrypt(
-    //   data,
-    //   keyParse,
-    //   {
-    //     iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.ZeroPadding
-    //   });
-    // console.log('encrypted: ' + encrypted);
-    // let decrypted = CryptoJS.AES.decrypt(encrypted, key, { iv: iv, padding: CryptoJS.pad.ZeroPadding });
     let decrypted = CryptoJS.AES.decrypt(data, key);
-    // console.log('DATVIT >> DECRYPTED: ' + decrypted.toString(CryptoJS.enc.Utf8));
-
     return decrypted.toString(CryptoJS.enc.Utf8);
   }
 
@@ -920,7 +984,6 @@ export default class App extends Component {
           </View>
 
           {this.showData()}
-
         </View >
       </ScrollView>
     );
@@ -942,6 +1005,12 @@ export default class App extends Component {
     this.setState({
       isWifi: isConnected
     });
+  }
+
+  showToastMessage = (message) => {
+
+    this.refs.defaultToastBottom.ShowToastFunction(message);
+
   }
 }
 
