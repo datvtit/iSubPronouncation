@@ -70,7 +70,9 @@ export default class App extends Component {
       this.state.searchType !== '' && typeof this.state.searchType === "string") {
       this.parseVideoFromUrl();
     } else {
-      ToastAndroid.show('You must input word to search', ToastAndroid.SHORT);
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('You must input word to search', ToastAndroid.SHORT);
+      }
       this.setState({
         isLoading: false,
       });
@@ -109,11 +111,9 @@ export default class App extends Component {
               if (script !== 'undefined') {
                 let res = script.text;
 
-                // console.log("DATVIT >> RES: " + res);
-
                 let data = this.encryptFun(res, ConstantHelper.KEY_CRYPT);
                 let listVideo = JSON.parse(data);
-                console.log("DATVIT >> videoList_LENGTH: " + listVideo.length);
+                console.log("DATVIT >> listVideo: " + listVideo);
 
                 if (listVideo.length > 0) {
                   let arrVideo = [];
@@ -172,7 +172,6 @@ export default class App extends Component {
   }
 
   showData = () => {
-    console.log("showData");
     if (this.state.videoIdList.length > 0) {
       return (
         <View style={styles.containerContent}>
@@ -215,7 +214,7 @@ export default class App extends Component {
               onChangeState={e => this.setState({
                 status: e.state
               }, () => {
-                // console.log("DATVIT >> STATUS: " + this.state.status);
+                console.log("DATVIT >> STATUS: " + this.state.status);
               }
               )}
               onChangeQuality={e => this.setState({ quality: e.quality })}
@@ -413,7 +412,7 @@ export default class App extends Component {
             let lang = track.$.lang_code;
             let name = track.$.name;
             if (lang.search('en') > -1 && lang_default == 'true') {
-              this.getSub.bind(this, id, name, lang);
+              this.getSub(id, name, lang);
             }
           });
         });
@@ -487,7 +486,7 @@ export default class App extends Component {
             }
           });
 
-          this.setSubtitle.bind(this, caption, capList, timeSeek, mark);
+          this.setSubtitle(caption, capList, timeSeek, mark);
         });
       }).catch((err) => {
         // console.log('GET_SUB_YOUTUBE_API >> ERROR', err);
@@ -511,14 +510,16 @@ export default class App extends Component {
     const capUpdate = setInterval(() => {
       try {
 
-        console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
+        // console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
 
         if (!this.state.isSeek) {
           this.setState({
             isSeek: true,
           }, () => {
-            console.log("SEEK_TO: " + Number.parseInt(this.state.timeSeek));
-            this._youTubePlayer && this._youTubePlayer.seekTo(Number.parseInt(this.state.timeSeek));
+            if (this.state.timeSeek) {
+              console.log("SEEK_TO: " + Number.parseInt(this.state.timeSeek));
+              this._youTubePlayer && this._youTubePlayer.seekTo(Number.parseInt(this.state.timeSeek));
+            }
           });
         }
 
@@ -701,13 +702,17 @@ export default class App extends Component {
       this.setState({
         isPlaying: false,
       }, () => {
-        ToastAndroid.show('Video paused', ToastAndroid.SHORT);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Video paused', ToastAndroid.SHORT);
+        }
       })
     } else {
       this.setState({
         isPlaying: true,
       }, () => {
-        ToastAndroid.show('Video continue', ToastAndroid.SHORT);
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Video continue', ToastAndroid.SHORT);
+        } 
       })
     }
   }
@@ -831,10 +836,10 @@ export default class App extends Component {
                         this.setState({
                           isLoading: false,
                         });
-                      } else {
                         if (Platform.OS === 'android') {
                           ToastAndroid.show('Not connection internet. Please check connection', ToastAndroid.SHORT);
                         }
+                      } else {
                         this.fetchDataFromUrl();
                       }
                     });
@@ -871,10 +876,10 @@ export default class App extends Component {
                       this.setState({
                         isLoading: false,
                       });
-                    } else {
                       if (Platform.OS === 'android') {
                         ToastAndroid.show('Not connection internet. Please check connection', ToastAndroid.SHORT);
                       }
+                    } else {
                       this.fetchDataFromUrl();
                     }
 
@@ -922,7 +927,7 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    NetInfo.isConnected.addEventListener('change', this.handleConnectionChange);
+    NetInfo.isConnected.addEventListener('connectionChange', this.handleConnectionChange);
 
     NetInfo.isConnected.fetch().done(
       (isConnected) => { this.setState({ isWifi: isConnected }); }
@@ -930,7 +935,7 @@ export default class App extends Component {
   }
 
   componentWillUnmount() {
-    NetInfo.isConnected.removeEventListenesr('change', this.handleConnectionChange);
+    NetInfo.isConnected.removeEventListenesr('connectionChange', this.handleConnectionChange);
   }
 
   handleConnectionChange = (isConnected) => {
@@ -978,7 +983,7 @@ const styles = StyleSheet.create({
     padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: (Platform.OS === 'ios') ? 2 : 1,
     borderColor: '#888',
     borderRadius: 5,
     backgroundColor: '#fff',
@@ -1096,7 +1101,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 5,
     borderColor: '#8B98AD',
-    borderWidth: 1,
+    borderWidth: (Platform.OS === 'ios') ? 2 : 1,
     padding: 10,
     flex: .5,
     flexDirection: 'row',
