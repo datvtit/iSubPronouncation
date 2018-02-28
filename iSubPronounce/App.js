@@ -91,7 +91,7 @@ export default class App extends React.Component {
 
     fetch(url)
       .then((response) => {
-        // console.log("DATVIT >> response: " + response.status);
+        console.log("DATVIT >> response: " + response.status);
         if (response.status === 200) {
           return response.text();
         }
@@ -314,7 +314,8 @@ export default class App extends React.Component {
               play={this.state.isPlaying}
               loop={this.state.isLooping}
               fullscreen={this.state.fullscreen}
-              controls={1}
+              controls={2}
+              showinfo={false}
               resumePlayAndroid={true}
               modestbranding={true}
               rel={false}
@@ -418,86 +419,6 @@ export default class App extends React.Component {
   }
 
   updateTime = () => {
-    // console.log("updateTime");
-    // const timeUpdate = setInterval(() => {
-    //   try {
-    //     if ((this.state.duration > 10 && this.state.currentTime == this.state.duration)
-    //       || this.state.isFinish === true) {
-    //       return clearInterval(timeUpdate);
-    //     }
-
-    //     console.log("DATVIT >> CURRENT_TIME: " + this.state.currentTime);
-
-    //     if (Platform.OS === 'android') {
-    //       if (this._youTubePlayer && this.state.isReady && this.state.status === 'playing') {
-    //         this._youTubePlayer
-    //           .currentTime()
-    //           .then(currentTime => this.setState({ currentTime }))
-    //           .catch(errorMessage => {
-    //             console.log('DATVIT >> updateTime: error: ' + errorMessage);
-    //           });
-    //         this._youTubePlayer
-    //           .duration()
-    //           .then(duration => this.setState({ duration }))
-    //           .catch(errorMessage => {
-    //             // this.setState({ error: errorMessage });
-    //             console.log('DATVIT >> updateTime: error: ' + errorMessage);
-    //           });
-    //       }
-    //     }
-    //   } catch (err) {
-    //   }
-
-    //   try {
-    //     console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
-
-    //     if (!this.state.isSeek) {
-    //       this.setState({
-    //         isSeek: true,
-    //       }, () => {
-    //         if (this.state.timeSeek) {
-    //           console.log("SEEK_TO: " + Number.parseInt(this.state.timeSeek));
-    //           this._youTubePlayer && this._youTubePlayer.seekTo(Number.parseInt(this.state.timeSeek));
-    //         }
-    //       });
-    //     }
-
-    //     if (this.state.status == 'playing' && this.state.isPlaying === false) {
-    //       this.setState(() => {
-    //         isPlaying: true
-    //       });
-    //     }
-
-    //     if (this.state.captionList.length > 0 && this.state.isSeek) {
-
-    //       for (let i = this.state.captionList.length - 1; i >= 0; i--) {
-    //         // console.log("DATVIT >> CAP_TIME: " + this.state.captionList[i].timeStart);
-    //         // console.log("DATVIT >> CAP_SUB: " + this.state.captionList[i].subText);
-    //         if (this.state.captionList[i].timeStart <= this.state.currentTime + 2.5) {
-    //           if (this.state.curPosSub !== i) {
-    //             this.setState({
-    //               curPosSub: i,
-    //             });
-    //           }
-    //           if (this.state.status === 'playing' && this.state.curPosSub !== -1) {
-    //             let caption = this.state.captionList[this.state.curPosSub].subText;
-    //             // console.log("DATVIT >> caption: " + caption);
-
-    //             if (typeof caption === 'string' && caption !== 'undefined' && caption.length > 0) {
-    //               this.setState({
-    //                 curSubtitle: caption
-    //               });
-    //             }
-    //             break;
-    //           }
-    //         }
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.log("DATVIT >> ERROR: " + error);
-    //   }
-    // }, 1000);
-
     BackgroundTimer.runBackgroundTimer(() => {
       try {
         if ((this.state.duration > 10 && this.state.currentTime == this.state.duration)
@@ -505,7 +426,7 @@ export default class App extends React.Component {
           BackgroundTimer.stopBackgroundTimer();
         }
 
-        console.log("DATVIT >> CURRENT_TIME: " + this.state.currentTime);
+        // console.log("DATVIT >> CURRENT_TIME: " + this.state.currentTime);
 
         if (Platform.OS === 'android') {
           if (this._youTubePlayer && this.state.isReady && this.state.status === 'playing') {
@@ -528,7 +449,7 @@ export default class App extends React.Component {
       }
 
       try {
-        console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
+        // console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
 
         if (!this.state.isSeek) {
           this.setState({
@@ -702,68 +623,76 @@ export default class App extends React.Component {
       .then(response => response.text())
       .then((response) => {
         parseString(response, (err, result) => {
-          let subList = result.transcript.text;
-          var caption = '';
-          var capList = [];
-          var timeSeek = -1;
-          var mark = 0;
 
-          timeSeek = this.state.videoList[this.state.videosIndex].start;
-          caption = this.state.videoList[this.state.videosIndex].display;
+          try {
+            console.log('GET_SUB_YOUTUBE_API >> response: ', result);
+            let subList = result.transcript.text;
+            var caption = '';
+            var capList = [];
+            var timeSeek = -1;
+            var mark = 0;
 
-          subList.map((sub, index) => {
-            let text = sub._;
-            let start = sub.$.start;
+            timeSeek = this.state.videoList[this.state.videosIndex].start;
+            caption = this.state.videoList[this.state.videosIndex].display;
 
-            capList.push({
-              timeStart: Number.parseFloat(start),
-              subText: text,
+            subList.map((sub, index) => {
+              let text = sub._;
+              let start = sub.$.start;
+
+              capList.push({
+                timeStart: Number.parseFloat(start),
+                subText: text,
+              });
+              // Check sub seek to
+              // let subTemp = text
+              //   .replace(/\n/g, ' ')
+              //   .replace(/&#39;/g, "'")
+              //   .replace(/&gt;/g, '')
+              //   .replace(/&quot;/g, '"')
+              //   .replace(/--/g, '').trim().toLowerCase();
+
+              // if (timeSeek === -1) {
+              //   if (this.state.searchText !== '' && this.state.searchText.trim().search(' ') !== -1) {
+              //     if (subTemp.search(this.state.searchText.toLowerCase()) !== -1) {
+              //       caption = text;
+              //       timeSeek = Number.parseFloat(start);
+              //       mark = index;
+
+              //       console.log("DATVIT >> SEEK_TO_SUB_1: " + caption + " | " + timeSeek + " | " + mark);
+
+              //     }
+              //   } else {
+              //     let subList = subTemp.split(' ');
+
+              //     for (let i = 0; i < subList.length; i++) {
+              //       if (subList[i].trim().replace(/\"/g, '')
+              //         .replace(/\'/g, '')
+              //         .replace(/\-/g, '')
+              //         .replace(/\./g, '')
+              //         .replace(/\,/g, '')
+              //         .replace(/\!/g, '')
+              //         .toLowerCase() === this.state.searchText.trim().toLowerCase()) {
+              //         caption = text;
+              //         timeSeek = Number.parseFloat(start);
+              //         mark = index;
+
+              //         console.log("DATVIT >> SEEK_TO_SUB_2: " + caption + " | " + timeSeek + " | " + mark);
+              //         break;
+              //       }
+              //     }
+              //   }
+              // }
             });
-            // Check sub seek to
-            let subTemp = text
-              .replace(/\n/g, ' ')
-              .replace(/&#39;/g, "'")
-              .replace(/&gt;/g, '')
-              .replace(/&quot;/g, '"')
-              .replace(/--/g, '').trim().toLowerCase();
 
-            // if (timeSeek === -1) {
-            //   if (this.state.searchText !== '' && this.state.searchText.trim().search(' ') !== -1) {
-            //     if (subTemp.search(this.state.searchText.toLowerCase()) !== -1) {
-            //       caption = text;
-            //       timeSeek = Number.parseFloat(start);
-            //       mark = index;
+            console.log('GET_SUB_YOUTUBE_API >> capList: ', capList.length);
 
-            //       console.log("DATVIT >> SEEK_TO_SUB_1: " + caption + " | " + timeSeek + " | " + mark);
-
-            //     }
-            //   } else {
-            //     let subList = subTemp.split(' ');
-
-            //     for (let i = 0; i < subList.length; i++) {
-            //       if (subList[i].trim().replace(/\"/g, '')
-            //         .replace(/\'/g, '')
-            //         .replace(/\-/g, '')
-            //         .replace(/\./g, '')
-            //         .replace(/\,/g, '')
-            //         .replace(/\!/g, '')
-            //         .toLowerCase() === this.state.searchText.trim().toLowerCase()) {
-            //         caption = text;
-            //         timeSeek = Number.parseFloat(start);
-            //         mark = index;
-
-            //         console.log("DATVIT >> SEEK_TO_SUB_2: " + caption + " | " + timeSeek + " | " + mark);
-            //         break;
-            //       }
-            //     }
-            //   }
-            // }
-          });
-
-          this.setSubtitle(caption, capList, timeSeek, mark);
+            this.setSubtitle(caption, capList, timeSeek, mark);
+          } catch (err) {
+            console.log('DATVIT >> ERR_SUB: ' + err);
+          }
         });
       }).catch((err) => {
-        // console.log('GET_SUB_YOUTUBE_API >> ERROR', err);
+        console.log('GET_SUB_YOUTUBE_API >> ERROR', err);
       })
   }
 
@@ -778,68 +707,6 @@ export default class App extends React.Component {
     }, () => {
       // this.seekPosition(timeSeek);
     });
-  }
-
-  updateSubtitle = () => {
-    // console.log("DATVIT >>  updateSubtitle");
-    const capUpdate = setInterval(() => {
-      try {
-
-        console.log("TIME_UP: " + this.state.currentTime + " | " + this.state.duration);
-
-        if (!this.state.isSeek) {
-          this.setState({
-            isSeek: true,
-          }, () => {
-            if (this.state.timeSeek) {
-              console.log("SEEK_TO: " + Number.parseInt(this.state.timeSeek));
-              this._youTubePlayer && this._youTubePlayer.seekTo(Number.parseInt(this.state.timeSeek));
-            }
-          });
-        }
-
-        // if (this.state.status == 'playing' && this.state.isPlaying === false) {
-        //   this.setState(() => {
-        //     isPlaying: true
-        //   });
-        // }
-
-        if ((this.state.duration > 10 && this.state.currentTime == this.state.duration)
-          || this.state.isFinish === true) {
-          return clearInterval(capUpdate);
-        }
-
-        if (this.state.captionList.length > 0 && this.state.isSeek) {
-
-          for (let i = this.state.captionList.length - 1; i >= 0; i--) {
-            // console.log("DATVIT >> CAP_TIME: " + this.state.captionList[i].timeStart);
-            // console.log("DATVIT >> CAP_SUB: " + this.state.captionList[i].subText);
-
-            if (this.state.captionList[i].timeStart <= this.state.currentTime + 2.5) {
-
-              if (this.state.curPosSub !== i) {
-                this.setState({
-                  curPosSub: i,
-                });
-              }
-              if (this.state.status === 'playing' && this.state.curPosSub !== -1) {
-                let caption = this.state.captionList[this.state.curPosSub].subText;
-                // console.log("DATVIT >> caption: " + caption);
-
-                if (typeof caption === 'string' && caption !== 'undefined' && caption.length > 0) {
-                  this.setState({
-                    curSubtitle: caption
-                  });
-                }
-                break;
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.log("DATVIT >> ERROR: " + error);
-      }
-    }, 1000);
   }
 
   formatSubtitle = () => {
@@ -1082,7 +949,7 @@ export default class App extends React.Component {
                       textSearch: textEntry,
                     });
                   }}
-                  value={this.state.searchText}
+                  value={this.state.textSearch}
                   onSubmitEditing={() => {
                     this.searchWord(this.state.textSearch);
                   }}
@@ -1090,7 +957,7 @@ export default class App extends React.Component {
               </View>
               <View style={{ flex: 1 }}>
                 <ButtonSearch onPress={() => {
-                   this.searchWord(this.state.textSearch);
+                  this.searchWord(this.state.textSearch);
                 }}>
                   <Image source={require('./images/searchIcon.png')} style={{
                     width: (Platform.OS === 'ios') ? 20 : 60,
@@ -1161,7 +1028,7 @@ export default class App extends React.Component {
       status: null,
       quality: null,
       error: null,
-      isPlaying: false,
+      isPlaying: true,
       isLooping: true,
       duration: 0,
       currentTime: 0,
