@@ -11,6 +11,7 @@
     "fast-html-parser": "^1.0.1",
     "react": "16.2.0",
     "react-native": "0.53.0",
+    "react-native-background-timer": "^2.0.0",
     "react-native-xml2js": "^1.0.3",
     "react-native-youtube": "^1.1.0",
     "util": "^0.10.3"
